@@ -1,0 +1,139 @@
+{
+  "name": "architecture-visualiser",
+  "displayName": "Architecture-Visualiser",
+  "description": "Interactive architecture diagrams for your codebase: system, component and module views, import cycles, health score, architecture rules and drift tracking.",
+  "version": "0.2.0",
+  "publisher": "indudhara59",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "architecture",
+    "diagram",
+    "dependency graph",
+    "imports",
+    "c4",
+    "cycles",
+    "visualization",
+    "dependency cruiser"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "architectureVisualiser.generate",
+        "title": "Generate Architecture Diagram",
+        "category": "Architecture-Visualiser",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "architectureVisualiser.generateForFolder",
+        "title": "Visualise Architecture of Folder",
+        "category": "Architecture-Visualiser"
+      },
+      {
+        "command": "architectureVisualiser.exportMermaid",
+        "title": "Export Diagram as Mermaid",
+        "category": "Architecture-Visualiser"
+      },
+      {
+        "command": "architectureVisualiser.saveSnapshot",
+        "title": "Save Architecture Snapshot",
+        "category": "Architecture-Visualiser"
+      },
+      {
+        "command": "architectureVisualiser.clearSnapshot",
+        "title": "Clear Architecture Snapshot",
+        "category": "Architecture-Visualiser"
+      },
+      {
+        "command": "architectureVisualiser.createRules",
+        "title": "Create Architecture Rules File",
+        "category": "Architecture-Visualiser"
+      }
+    ],
+    "configuration": {
+      "title": "Architecture-Visualiser",
+      "properties": {
+        "architectureVisualiser.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra glob patterns to exclude (in addition to .gitignore and built-in excludes)."
+        },
+        "architectureVisualiser.groupingDepth": {
+          "type": "number",
+          "default": 0,
+          "description": "Folder depth used to group files into components. 0 = automatic."
+        },
+        "architectureVisualiser.maxFiles": {
+          "type": "number",
+          "default": 5000,
+          "description": "Maximum number of source files to analyze."
+        },
+        "architectureVisualiser.diagnostics.cycles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show import cycles in the Problems panel (as information)."
+        }
+      }
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "architectureVisualiser.generateForFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@90"
+        }
+      ]
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "architecture-visualiser.json",
+        "url": "./media/rules.schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "node esbuild.mjs --production && vsce package --no-dependencies",
+    "vscode:prepublish": "node esbuild.mjs --production",
+    "test:integration": "npm run build && esbuild test/integration/runTest.ts test/integration/suite.ts --bundle --platform=node --format=cjs --outdir=out/integration --external:vscode --external:@vscode/test-electron --log-level=warning && node out/integration/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/picomatch": "^3.0.2",
+    "@types/vscode": "1.85",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.24.2",
+    "typescript": "5.6",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "elkjs": "^0.9.3",
+    "ignore": "^6.0.2",
+    "lucide-preact": "^0.460.0",
+    "picomatch": "^4.0.7",
+    "preact": "10.24",
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.20.8"
+  },
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "icon": "media/icon.png"
+}

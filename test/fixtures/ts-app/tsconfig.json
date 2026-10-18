@@ -1,0 +1,4 @@
+{
+  // comment + trailing comma
+  "compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["src/*"], "~utils": ["src/utils/index.ts"] }, },
+}
