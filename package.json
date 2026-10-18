@@ -2,7 +2,7 @@
   "name": "architecture-visualiser",
   "displayName": "Architecture-Visualiser",
   "description": "Interactive architecture diagrams for your codebase: system, component and module views, import cycles, health score, architecture rules and drift tracking.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "indudhara59",
   "license": "MIT",
   "repository": {
@@ -32,19 +32,25 @@
     "dependency cruiser"
   ],
   "main": "./dist/extension.js",
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "architectureVisualiser.generate",
-        "title": "Generate Architecture Diagram",
+        "title": "Open Architecture Diagram",
         "category": "Architecture-Visualiser",
-        "icon": "$(type-hierarchy)"
+        "icon": {
+          "light": "media/toolbar.svg",
+          "dark": "media/toolbar.svg"
+        }
       },
       {
         "command": "architectureVisualiser.generateForFolder",
         "title": "Visualise Architecture of Folder",
-        "category": "Architecture-Visualiser"
+        "category": "Architecture-Visualiser",
+        "icon": "$(folder-opened)"
       },
       {
         "command": "architectureVisualiser.exportMermaid",
@@ -92,6 +98,16 @@
           "type": "boolean",
           "default": true,
           "description": "Show import cycles in the Problems panel (as information)."
+        },
+        "architectureVisualiser.showToolbarButton": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Open Architecture Diagram button in the editor title bar."
+        },
+        "architectureVisualiser.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Architecture button in the status bar."
         }
       }
     },
@@ -102,12 +118,50 @@
           "when": "explorerResourceIsFolder",
           "group": "navigation@90"
         }
+      ],
+      "editor/title": [
+        {
+          "command": "architectureVisualiser.generate",
+          "group": "navigation@-100",
+          "when": "activeWebviewPanelId != 'architectureVisualiser' && config.architectureVisualiser.showToolbarButton"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "architectureVisualiser.generate",
+          "when": "view == architectureVisualiser.home",
+          "group": "navigation"
+        }
       ]
     },
     "jsonValidation": [
       {
         "fileMatch": "architecture-visualiser.json",
         "url": "./media/rules.schema.json"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "architectureVisualiser",
+          "title": "Architecture-Visualiser",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "architectureVisualiser": [
+        {
+          "id": "architectureVisualiser.home",
+          "name": "Architecture",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "architectureVisualiser.home",
+        "contents": "See how your codebase fits together: components, dependencies, import cycles and the services it uses.\n[$(type-hierarchy) Open Architecture Diagram](command:architectureVisualiser.generate)\n[$(folder-opened) Diagram a Folder\u2026](command:architectureVisualiser.generateForFolder)\nTrack changes and enforce boundaries:\n[$(device-camera) Save Snapshot](command:architectureVisualiser.saveSnapshot)\n[$(shield) Create Rules File](command:architectureVisualiser.createRules)\nTip: the diagram button also sits in the editor toolbar (top right) and the status bar."
       }
     ]
   },

@@ -1,10 +1,11 @@
 import {
-  ArrowDownUp, ArrowLeftRight, Boxes, Camera, ChevronDown, ChevronRight, Download, FileCode2, FileImage, GitBranch,
+  ArrowDownUp, ArrowLeftRight, Boxes, Camera, ChevronRight, FileCode2, FolderSearch, GitBranch, ImagePlus, PenTool,
   Check, Monitor, Moon, Network, PanelLeft, RefreshCw, Search, ShieldCheck, Sun, Workflow,
 } from 'lucide-preact';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { LayerTag, Payload } from '../core/types';
 import { loadState, post, saveState } from './api';
+import { QuickActions, QuickAction } from './actions';
 import { Canvas, CanvasApi, Focus } from './canvas';
 import { layoutToSvg, svgToPngBase64 } from './export';
 import { Inspector } from './inspector';
@@ -62,7 +63,6 @@ export function App() {
   const [selected, setSelected] = useState<string>();
   const [focus, setFocus] = useState<Focus | null>(null);
   const [palette, setPalette] = useState(false);
-  const [menu, setMenu] = useState(false);
   const [themeMenu, setThemeMenu] = useState(false);
   const [toast, setToast] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -183,7 +183,6 @@ export function App() {
   };
 
   const exportImage = async (format: 'svg' | 'png') => {
-    setMenu(false);
     const l = api.current?.getLayout();
     if (!l || !ix) return;
     const title = `${basename(ix.p.graph.root)} — ${view === 'modules' ? ix.comp.get(ui.focus!)?.label : view === 'system' ? 'System' : 'Components'}`;
@@ -215,6 +214,16 @@ export function App() {
     ],
     [payload, view, direction, ui.focus],
   );
+  const viewName = view === 'system' ? 'System' : view === 'modules' ? 'Modules' : 'Components';
+  const quickActions: QuickAction[] = [
+    { id: 'png', section: 'Create', title: 'Generate image', description: `PNG of the ${viewName} view, ready to share`, icon: ImagePlus, color: '#7c5cff', badge: 'PNG', run: () => exportImage('png') },
+    { id: 'svg', section: 'Create', title: 'Vector image', description: 'Crisp SVG for docs and slides', icon: PenTool, color: '#22c3e6', badge: 'SVG', run: () => exportImage('svg') },
+    { id: 'mmd', section: 'Create', title: 'Mermaid diagram', description: 'Paste straight into a README', icon: GitBranch, color: '#1fb47a', badge: 'MD', run: () => post({ type: 'exportMermaid' }) },
+    { id: 'snap', section: 'Analyze', title: payload?.diff ? 'Update snapshot' : 'Save snapshot', description: 'Track how the architecture changes', icon: Camera, color: '#f0a020', run: () => post({ type: 'saveSnapshot' }) },
+    { id: 'rules', section: 'Analyze', title: payload?.hasRulesFile ? 'Edit rules' : 'Create rules', description: 'Flag imports that break your layering', icon: ShieldCheck, color: '#ef4f6b', run: () => post({ type: payload?.hasRulesFile ? 'openRules' : 'createRules' }) },
+    { id: 'folder', section: 'Analyze', title: 'Diagram a folder', description: 'Focus on one part of the codebase', icon: FolderSearch, color: '#4f8cff', run: () => post({ type: 'pickFolder' }) },
+    { id: 'refresh', section: 'Analyze', title: 'Re-analyze', description: 'Rescan the workspace now', icon: RefreshCw, color: '#8b93a7', run: refresh },
+  ];
   const paletteItems = useMemo(
     () => (ix && palette ? buildItems(ix, { component: selectComponent, file: revealFile, tech: selectTech }, commands) : []),
     [ix, palette, commands],
@@ -237,7 +246,6 @@ export function App() {
           setSelected(undefined);
           setFocus(null);
         } else if (view === 'modules') go('components', undefined, ui.focus ? { select: ui.focus } : undefined);
-        setMenu(false);
         setThemeMenu(false);
       } else if (e.key === 'f' || e.key === 'F') api.current?.fit();
       else if (e.key === '1') go('system');
@@ -259,10 +267,7 @@ export function App() {
   }, [toast]);
 
   useEffect(() => {
-    const close = () => {
-      setMenu(false);
-      setThemeMenu(false);
-    };
+    const close = () => setThemeMenu(false);
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
   }, []);
@@ -344,7 +349,6 @@ export function App() {
             title={`Theme: ${THEMES.find((t) => t.id === ui.theme)!.label} (T)`}
             onClick={(e) => {
               e.stopPropagation();
-              setMenu(false);
               setThemeMenu(!themeMenu);
             }}
           >
@@ -373,23 +377,7 @@ export function App() {
         <button class="btn icon" title="Re-analyze" onClick={refresh}>
           <RefreshCw size={15} style={busy ? { animation: 'spin 0.8s linear infinite' } : undefined} />
         </button>
-        <div class="menu-wrap">
-          <button class="btn" onClick={(e) => { e.stopPropagation(); setThemeMenu(false); setMenu(!menu); }}>
-            <Download size={14} /> Export <ChevronDown size={13} />
-          </button>
-          {menu && (
-            <div class="menu" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => exportImage('svg')}><FileImage size={15} /> SVG image <small>vector</small></button>
-              <button onClick={() => exportImage('png')}><FileImage size={15} /> PNG image <small>2×</small></button>
-              <button onClick={() => { setMenu(false); post({ type: 'exportMermaid' }); }}><GitBranch size={15} /> Mermaid <small>README</small></button>
-              <hr />
-              <button onClick={() => { setMenu(false); post({ type: 'saveSnapshot' }); }}><Camera size={15} /> Save snapshot</button>
-              <button onClick={() => { setMenu(false); post({ type: payload.hasRulesFile ? 'openRules' : 'createRules' }); }}>
-                <ShieldCheck size={15} /> {payload.hasRulesFile ? 'Edit rules' : 'Create rules file'}
-              </button>
-            </div>
-          )}
-        </div>
+        <QuickActions actions={quickActions} />
       </header>
 
       <div class="body">

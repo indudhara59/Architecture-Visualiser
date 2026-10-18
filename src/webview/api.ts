@@ -16,6 +16,7 @@ export type ToExtension =
   | { type: 'clearSnapshot' }
   | { type: 'createRules' }
   | { type: 'openRules' }
+  | { type: 'pickFolder' }
   | { type: 'copyText'; text: string; label?: string };
 
 export function post(msg: ToExtension): void {

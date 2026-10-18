@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+- One-click access: diagram button in the editor title bar, an Architecture panel in the activity bar, and a status bar button from startup. No command typing needed.
+- New "+" menu in the diagram toolbar: generate PNG/SVG images, Mermaid, snapshots, rules, diagram a folder, re-analyze.
+- Light / Dark / Match VS Code theme switcher (press T).
+- Snapshot and rules commands open the diagram automatically if it isn't open yet.
+
 ## 0.2.0
 
 - New UI: custom canvas with card nodes, routed edges, minimap, zoom controls, ⌘K palette, sidebar and inspector; light and dark themes.

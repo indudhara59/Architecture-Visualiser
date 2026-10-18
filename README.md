@@ -1,6 +1,17 @@
 # Architecture-Visualiser
 
-An interactive architecture map of your codebase, right inside VS Code. Open a folder, run **Architecture-Visualiser: Generate Architecture Diagram**, and explore.
+An interactive architecture map of your codebase, right inside VS Code.
+
+## Opening it
+
+No commands to type. Use whichever is closest:
+
+- the **diagram button** in the editor's top-right toolbar
+- the **Architecture icon** in the activity bar (left), which opens a panel of one-click buttons
+- the **Architecture** item in the status bar (bottom left)
+- **right-click any folder** in the Explorer and choose **Visualise Architecture of Folder**
+
+You can also use the Command Palette: **Architecture-Visualiser: Open Architecture Diagram**.
 
 ## Three levels of zoom
 
@@ -70,6 +81,8 @@ Supports **TypeScript, JavaScript (JSX/TSX, ESM/CJS) and Python**. Everything ru
 | `architectureVisualiser.groupingDepth` | `0` | Folder depth for components (`0` = automatic) |
 | `architectureVisualiser.maxFiles` | `5000` | Stop after this many source files |
 | `architectureVisualiser.diagnostics.cycles` | `true` | Show import cycles in the Problems panel |
+| `architectureVisualiser.showToolbarButton` | `true` | Show the diagram button in the editor title bar |
+| `architectureVisualiser.showStatusBar` | `true` | Show the Architecture button in the status bar |
 
 ## Development
 

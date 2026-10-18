@@ -23,6 +23,7 @@ type FromWebview =
   | { type: 'clearSnapshot' }
   | { type: 'createRules' }
   | { type: 'openRules' }
+  | { type: 'pickFolder' }
   | { type: 'copyText'; text: string; label?: string };
 
 let analyzer: Analyzer | undefined;
@@ -33,9 +34,17 @@ let statusItem: vscode.StatusBarItem;
 export function activate(context: vscode.ExtensionContext): void {
   analyzer = new Analyzer(vscode.Uri.joinPath(context.extensionUri, 'dist', 'wasm').fsPath);
   diagnostics = vscode.languages.createDiagnosticCollection('architecture-visualiser');
-  statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
+  statusItem = vscode.window.createStatusBarItem('architectureVisualiser.status', vscode.StatusBarAlignment.Left, 50);
+  statusItem.name = 'Architecture-Visualiser';
   statusItem.command = 'architectureVisualiser.generate';
-  context.subscriptions.push(diagnostics, statusItem);
+  resetStatus();
+  context.subscriptions.push(
+    diagnostics,
+    statusItem,
+    // The activity bar panel only shows welcome buttons, so its tree is always empty.
+    vscode.window.registerTreeDataProvider('architectureVisualiser.home', { getChildren: () => [], getTreeItem: (x: vscode.TreeItem) => x }),
+    vscode.workspace.onDidChangeConfiguration((e) => e.affectsConfiguration('architectureVisualiser.showStatusBar') && (panel?.payload ? panel.refreshStatus() : resetStatus())),
+  );
 
   const open = async (folder: vscode.WorkspaceFolder, scope?: string) => {
     if (panel && panel.folder.uri.toString() === folder.uri.toString() && panel.scope === scope) panel.reveal();
@@ -72,12 +81,23 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 }
 
+/** Runs an action that needs analysis results, opening the diagram first if necessary. */
 async function withPanel(fn: (p: ArchPanel) => Promise<void>): Promise<void> {
-  if (!panel?.payload) {
-    vscode.window.showInformationMessage('Architecture-Visualiser: generate a diagram first.');
-    return;
-  }
-  await fn(panel);
+  if (!panel?.payload) await vscode.commands.executeCommand('architectureVisualiser.generate');
+  if (panel?.payload) await fn(panel);
+}
+
+function statusEnabled(): boolean {
+  return vscode.workspace.getConfiguration('architectureVisualiser').get<boolean>('showStatusBar', true) && !!vscode.workspace.workspaceFolders?.length;
+}
+
+/** Idle state: a one-click button to open the diagram. */
+function resetStatus(): void {
+  statusItem.text = '$(type-hierarchy) Architecture';
+  statusItem.tooltip = 'Open Architecture Diagram';
+  statusItem.backgroundColor = undefined;
+  if (statusEnabled()) statusItem.show();
+  else statusItem.hide();
 }
 
 export function deactivate(): void {
@@ -161,7 +181,7 @@ class ArchPanel {
     this.webview.dispose();
     while (this.disposables.length) this.disposables.pop()?.dispose();
     diagnostics.clear();
-    statusItem.hide();
+    resetStatus();
     this.disposeEmitter.fire();
     this.disposeEmitter.dispose();
   }
@@ -220,7 +240,7 @@ class ArchPanel {
         };
         this.post();
         this.updateDiagnostics(cfg.get<boolean>('diagnostics.cycles', true));
-        this.updateStatus();
+        this.refreshStatus();
         if (graph.stats.truncated) {
           vscode.window.showWarningMessage(
             `Architecture-Visualiser: stopped at ${graph.stats.files} files (architectureVisualiser.maxFiles). Add excludes or raise the limit.`,
@@ -279,8 +299,12 @@ class ArchPanel {
     for (const [file, ds] of byFile) diagnostics.set(this.uri(file), ds);
   }
 
-  private updateStatus(): void {
+  refreshStatus(): void {
     if (!this.payload) return;
+    if (!statusEnabled()) {
+      statusItem.hide();
+      return;
+    }
     const { graph, insights } = this.payload;
     const cycles = graph.fileCycles.length;
     const violations = insights.ruleViolations.length;
@@ -342,6 +366,9 @@ class ArchPanel {
         break;
       case 'openRules':
         await vscode.window.showTextDocument(this.uri(RULES_FILE), { viewColumn: vscode.ViewColumn.Beside });
+        break;
+      case 'pickFolder':
+        await vscode.commands.executeCommand('architectureVisualiser.generateForFolder');
         break;
       case 'copyText':
         await vscode.env.clipboard.writeText(m.text);
