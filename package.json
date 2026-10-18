@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "publisher": "indudhara59",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/indudhara59/Architecture-Visualiser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/indudhara59/Architecture-Visualiser/issues"
+  },
+  "homepage": "https://github.com/indudhara59/Architecture-Visualiser#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
